@@ -1,0 +1,1182 @@
+swagger: '2.0'
+host: virtserver.swaggerhub.com
+basePath: /YahooSmallBusiness/YSB_Orders_API/2.0
+
+info:
+  version: '2.0'
+  title: 'Yahoo Small Business API - Orders'
+  description: |
+  
+  
+    # Welcome to Yahoo Small Business API Documentation
+    
+    Yahoo Merchant Solutions Order and Payment APIs are designed to open up the Store as a platform, to provide merchants using external Order Management Systems (OMS) with customized order and payment processing solutions. Previously, integration with an external OMS lacked enough API resources for maintaining synchronous communication between order and payment processing systems. 
+    
+    # API Links
+    
+    * [Yahoo Small Business - Bulk Payment API](https://app.swaggerhub.com/apis-docs/YahooSmallBusiness/yahoo-small_business_payments_bulk_api/2.0)
+    
+    * [Yahoo Small Business - Non-Bulk Payment API](https://app.swaggerhub.com/apis-docs/YahooSmallBusiness/yahoo-small_business_non-bulk_payments_api/2.0)
+    
+    * [Yahoo Small Business - Checkout API](https://app.swaggerhub.com/apis-docs/YahooSmallBusiness/yahoo-small_business_checkout_api/2.0)
+    * [Yahoo Small Business - API Getting Started Guide](https://sep.yimg.com/ty/cdn/vw/order-payment-api-100313.pdf)
+    
+    # Order APIs
+
+    The Order API package includes sets of non-bulk APIs for order processing and custom order status creation. Order APIs enable partners to update order information, retrieve order information, and to get information about a range of orders. Custom Order Status operations enable new custom order statuses to be created, and allow for updating and retrieving information about these statuses. Call responses for all order processing APIs are synchronous in nature.
+
+# schemes:
+#   - "http"
+#   - "https"
+produces:
+  - "application/xml"
+  - "text/plain"
+consumes:
+  - "application/xml"
+  - "text/plain"
+  
+paths:
+  /V1/ Get Order:
+    post:
+      tags:
+        - Orders 
+      summary: Get a single order
+      description: >-
+        ## Get Order
+
+          This operation is used to retrieve information about a particular order. The information sought must be specified in the ‘Include’ tag under ‘Filter’. Currently, only certain fields are supported.
+          
+          **REST based URL:** https://<storeid>.order.store.yahooapis.com/V1/order
+            
+          **Method**: POST
+          
+           **Request fields**:
+          
+          Request Field | Type | Cardinality | Valid Values | Description
+          ------------- | ---- | ----------- | ------------ | ------------
+          OrderListQuery/Filter/Field | String | Required (1 or more) | status, shipmentinfo, shiptoinfo, billtoinfo, buyeremail, customfields | The specific field that should be retrieved from this order.
+          OrderList/QueryParams/OrderID | String | Required | Valid order ID | Order number
+          
+          All Order APIs operate in Non-Bulk mode, using the following resources and verbs:
+          
+          Resource Name| Allowed Verb(s)
+          ---------- | -----------
+          Order | get, update
+          OrderListQuery | get
+          CustomOrderStatus | create, update
+          CustomOrderStatusListQuery | get
+      
+      
+          The system defined status IDs listed below are exposed to Order API users:
+      
+          Status ID | Status Description
+          ---------- | -----------
+          0 | OK
+          1 | Fradulent
+          2 | Cancelled
+          3 | Returned
+          4 | On Hold
+          5 | Pending Review
+          6 | Partially Shipped
+          7 | Fully Shipped
+          8 | Tracked
+          16-112 | Custom Status ID
+      
+          Error responses are returned using the following common structure:
+          
+          Response field | Description
+          -------------- | ---------------
+          Error/Code | The numerical code assigned to the error
+          Error/Message| The error message corresponding to the error code, explaining the error that has occurred
+               
+               
+              
+                    
+          
+        
+      operationId: getOrder
+      consumes:
+        - application/xml
+      produces:
+        - application/xml
+      parameters:
+        - in: body
+          name: payload
+          description: Get Order payload
+          required: true
+          schema:
+            $ref: '#/definitions/ystorewsRequest'
+      responses:
+        '200':
+          description: Successful Order Results
+          schema:
+            $ref: '#/definitions/ystorewsResponse'
+        '500':
+          description: Unsuccessful Operation
+          schema:
+            $ref: '#/definitions/ErrorResourceList'
+            
+            
+  /V1/Update order:
+    post:
+      tags: 
+        - Orders
+      summary: Update an order
+      description: >-
+        ## Update Order
+
+          The Update Order operation is used to update desired information about a particular order. Currently,
+          only certain fields are supported for updates.
+          
+          
+          **Note about updating an order with status #'s 6, 7 or 8:**
+          
+          Users may not mark an order with any of the above statuses (6, 7 or 8) directly. Shipment information for
+          the order should instead be updated, which will then mark the order with any of these statuses.</aside>
+          
+          **Note about updating an order with custom status:**
+          
+          Users wishing to mark an order with a custom status should first create a custom status using the
+          CustomOrderStatus operation. Once created, the custom status ID may be used to mark any number of
+          orders.
+          
+          **Note for updating shipment information**:
+          
+          Number of items in an order | Type of shipment update allowed
+          --------------------------- | --------------------------------
+          1 | CartShipmentInfo only
+          More than 1 | Either CartShipmentInfo or multiple ItemShipmentInfo(s). These should not coexist in a request.
+          
+          **REST based URL**: https://<storeid>.order.store.yahooapis.com/V1/order
+            
+          **Method**: POST
+          
+          **Request fields**:
+          
+          
+          **Input**:
+          
+          Request Field | Type | Cardinality | Valid Values | Description
+          ------------- | ---- | ----------- | ------------ | ------------
+          Order/OrderID | String | Required | Valid order ID | Order number
+          Order/StatusList | XML element | Optional | N/A| Status with which to update an order
+          Order/CartShipmentInfo | XML element | Optional | N/A | Shipment information for the order as a whole
+          Order/ShipToInfo | String | Optional | Valid N/A| Self explanatory
+          Order/BillToInfo | XML element | Optional | N/A | Self explanatory
+          Order/PayPalReviewInfo | XML element | Not allowed in an update request | N/A | Information about PayPal Payment Review
+          Order/BuyerEmail | String | Optional | Valid email ID | Self explanatory
+          Order/ItemList | XML element | Optional | N/A | Shipment information on a per item basis
+          Order/CreationTime | String | Not allowed in an update request | N/A | Self explanatory
+          Order/OrderTotals | XML elements | Not allowed in an update request | N/A| Self explanatory
+          Order/Referer | String | Not allowed in an update request | N/A | Self explanatory
+          Order/MerchantNotes | String | Optionnal | Consult XSD | Adds the given note to the existing notes in the order
+          Order/EntryPoint | String | Not allowed in an update request | Valid order ID | Self explanatory
+          Order/BuyerComments | String | Not allowed in an update request | N/A | Self explanatory
+          Order/PaymentProcessor | String | Not allowed in an update request | N/A | Self explanatory
+          Order/Currency | String | Not allowed in an update request | N/A| Currency used (for example, USD)
+          Order/ShipMethod | String | Not allowed in an update request | N/A | Self explanatory
+          
+          **StatusList**:
+          
+          Request Field | Type | Cardinality | Valid Values | Description
+          ------------- | ---- | ----------- | ------------ | ------------
+          Order/StatusList/OrderStatus | XML element | Required (only 1 in number) | N/A | Status with which to update an order (only one such element can be present in a request)
+          
+          
+          **OrderStatus**:
+          
+          Request Field | Type | Cardinality | Valid Values | Description
+          ------------- | ---- | ----------- | ------------ | ------------
+          Order/StatusList/OrderStatus/StatusID | String | Required | -5, 16-112 | Status with which to update an order
+          Order/StatusList/OrderStatus/Note | String | Required | Consult XSD  | Reason/Note for updating the order with this status
+          
+          **CartShipmentInfo**:
+          
+          Request Field | Type | Cardinality | Valid Values | Description
+          ------------- | ---- | ----------- | ------------ | ------------
+          TrackingNumber | String | Required | Consult XSD | Self explanatory
+          Shipper | String | Required | ups, fedex, airborne, usps, dhl | Self explanatory
+          Ship/State| String | Required | “shipped”: to mark the order shipped. “clear” : to clear the shipment status. Any other string: to update order with custom ship status. | Self explanatory
+          EmailCustomer| Integer | Optionnal | true/false | Self explanatory
+          
+          **ShipToInfo (at least one child should be present)**:
+          
+          Request Field | Type | Cardinality | Valid Values | Description
+          ------------- | ---- | ----------- | ------------ | ------------
+          GeneralInfo | XML element | Optional | N/A | General information (name, phone number, email address) of ship to customer
+          AddressInfo | XML element | Optional | N/A | Shipping address information
+          
+          BillToInfo (at least one child should be present):
+          
+          Request Field | Type | Cardinality | Valid Values | Description
+          ------------- | ---- | ----------- | ------------ | ------------
+          GeneralInfo | XML element | Optional | N/A | General information (name, phone number, email address) of customer billed
+          AddressInfo | XML element | Optional | N/A | Billing address information
+          
+          **GeneralInfo (at least one child should be present)**:
+          
+          Request Field | Type | Cardinality | Valid Values | Description
+          ------------- | ---- | ----------- | ------------ | ------------
+          FirstName | String | Optional | Consult XSD | Customer’s first name
+          LastName | String | Optional | Consult XSD | Customer’s last name
+          PhoneNumber | String | Optional | Consult XSD | Customer’s phone number
+          Company | String | Optional | Consult XSD | Customer's company
+          Email | String | Optional | Consult XSD | Customer’s email address
+          
+          **AddressInfo (at least one child should be present)**:
+          
+          Request Field | Type | Cardinality | Valid Values | Description
+          ------------- | ---- | ----------- | ------------ | ------------
+          Address1 | String | Optional | Consult XSD | Customer’s street address
+          Address2 | String | Optional | Consult XSD | Customer’s street addres, second line
+          City | String | Optional | Consult XSD | City in which street address resides
+          Country | String | Optional | Consult XSD | Country in which city and street address reside
+          State | String | Optional | Consult XSD | State in which street address and city reside
+          Zip | String | Optional | Consult XSD | Zip code of provided address
+          
+          **PayPalReviewInfo (at least one child should be present)**:
+          
+          Request Field | Type | Cardinality | Valid Values | Description
+          ------------- | ---- | ----------- | ------------ | ------------
+          PayPalReviewStatus | String | Optional | Under Review, OK to ship, DO
+          NOT ship | Status of PayPal Payment Review
+          SellerProtection | String | Optional | Ineligible, Eligible, PartiallyEligible | PayPal Seller Protection
+          
+          **ItemList**:
+          
+          Request Field | Type | Cardinality | Valid Values | Description
+          ------------- | ---- | ----------- | ------------ | ------------
+          Item| XML element |  Required (1 or more) | N/A | Ordered item information
+          
+          **Item**:
+          
+          Request Field | Type | Cardinality | Valid Values | Description
+          ------------- | ---- | ----------- | ------------ | ------------
+          LineNumber | String | Required | N/A | Item line number
+          ItemShipmentInfo | String | Required | N/A | Item shipment information
+          ItemID | String | Not allowed in an update request | N/A | Self explanatory
+          ItemCode | String | Not allowed in an update request | N/A | Self explanatory
+          Quantity | String | Not allowed in an update request | N/A | Self explanatory
+          UnitPrice | String | Not allowed in an update request | N/A | Self explanatory
+          Description | String | Not allowed in an update request | N/A | Self explanatory
+          URL | String | Not allowed in an update request | N/A | Product URL
+          Taxable | String | Not allowed in an update request | N/A | Indicates if item is subject to sales tax
+          ThumbnailURL | String | Not allowed in an update request | N/A | Product thumbnail image URL
+          SelectedOptionList | String | Not allowed in an update request | N/A | Self explanatory
+          
+          **SelectedOptionList**:
+          
+          Request Field | Type | Cardinality | Valid Values | Description
+          ------------- | ---- | ----------- | ------------ | ------------
+          Option | XML element | Not allowed in an update request | Self-explanatory
+          
+          **Option**:
+          
+          Request Field | Type | Cardinality | Valid Values | Description
+          ------------- | ---- | ----------- | ------------ | ------------
+          Name | String | Not allowed in an update request | N/A | Option name
+          Value | String | Not allowed in an update request | N/A | Option name
+          **ItemShipmentInfo**:
+          
+          Request Field | Type | Cardinality | Valid Values | Description
+          ------------- | ---- | ----------- | ------------ | ------------
+          TrackingNumber | String | Optional | Consult XSD | Shipment tracking number
+          Shipper  | String | Optional | ups, fedex, airborne, usps, dhl | Shipping provider
+          ShipState | String | Required | “shipped": to mark the order shipped. “clear” : to clear the shipment status.  Any other string: to update order with custom ship status | Status of shipment
+          EmailCustomer | String | Optional | true/false | Indicates customer email notification
+          
+          **OrderTotals**:
+          
+          Request Field | Type | Cardinality | Valid Values | Description
+          ------------- | ---- | ----------- | ------------ | ------------
+          Subtotal| Floating point| Not allowed in an update request | N/A | Self explanatory
+          Shipping| Floating point| Not allowed in an update request | N/A | Total shipping cost
+          Tax| Floating point | Not allowed in an update request | N/A | Total cost of taxes applied
+          GiftWrap| Floating point | Not allowed in an update request | N/A | Gift wrap cost
+          Discount | Floating point | Not allowed in an update request | N/A | Discount total
+          Coupon | Floating point | Not allowed in an update request | N/A | Coupon total
+          GiftCertificate | Floating point | Not allowed in an update request | N/A | Gift certificate total
+          Credit | XML element | Not allowed in an update request | N/A | Total of credits
+          MiscAdjustmentList | XML element | Not allowed in an update request | N/A | Total of other cost adjustments
+          Total | Floating point | Not allowed in an update request | N/A |Total price buyer will pay
+          
+          **MiscAdjustment**:
+          
+          Request Field | Type | Cardinality | Valid Values | Description
+          ------------- | ---- | ----------- | ------------ | ------------
+          Name | String | Not allowed in an update request | N/A | Name given to adjustment
+          Value | String | Required | N/A | Order number
+          
+          **MiscAdjustmentList**:
+          
+          Request Field | Type | Cardinality | Valid Values | Description
+          ------------- | ---- | ----------- | ------------ | ------------
+          MiscAdjustment | XML Element | Not allowed in an update request | N/A | Adjustment to order total
+        
+        
+        
+      operationId: updateOrder
+      consumes:
+        - application/xml
+      produces:
+        - application/xml
+      parameters:
+        - in: body
+          name: payload
+          description: Update Order payload
+          required: true
+          
+          schema:
+            $ref: '#/definitions/ystorewsRequest'
+      responses:
+        '200':
+          description: Successful Order Results
+          schema:
+            $ref: '#/definitions/ystorewsResponse'
+        '500':
+          description: Unsuccessful Operation
+          schema:
+            $ref: '#/definitions/ErrorResourceList'          
+            
+            
+  /V1/Get List  of orders:
+    post:
+      tags:
+        - Orders
+      summary: Get a list of orders
+      description: >-
+        This operation is used to retrieve information about a particular order.
+        The information sought must be specified in the ‘Include’ tag under
+        ‘Filter’. Currently, only certain fields are supported.
+      operationId: getOrderList
+      consumes:
+        - application/xml
+      produces:
+        - application/xml
+      parameters:
+        - in: body
+          name: payload
+          description: Get Order payload
+          required: true
+          schema:
+            $ref: '#/definitions/ystorewsRequest'
+      responses:
+        '200':
+          description: Successful Order Results
+          schema:
+            $ref: '#/definitions/ystorewsResponse'
+        '500':
+          description: Unsuccessful Operation
+          schema:
+            $ref: '#/definitions/ErrorResourceList'          
+
+  
+  /V1/Get a Range of orders:
+    post:
+      tags:
+        - Orders
+      summary: Get a Range of Orders
+      description: >-
+         ## Get Range 
+         
+         The IntervalRange and Counted Range operations are used to retrieve information about a range of orders. The information to be retrieved for these orders can be specified in the ‘Include’ tag under ‘Field’.
+
+          **Note**: Currently, the response data returned may not exceed 100 KB. Up to a maximum of 100
+          orders can be returned, as long as the response data does not exceed this 100 KB limit.
+          REST based URL: https://<storeid>.order.store.yahooapis.com/V1/order
+          
+          **Method**: POST
+          
+          ## GetIntervalRange
+          
+          The GetIntervalRange operation allows information about a range of orders to be retrieved, by specifying
+          a starting order ID and ending order ID interval to return.
+          
+          **Request fields**:
+          **Input**:
+          
+          Request Field | Type | Cardinality | Valid Values | Description
+          ------------- | ---- | ----------- | ------------ | ------------
+          OrderListQuery/Filter/Include| String| Required (1 or more) | all, status, shipmentinfo, shiptoinfo, billtoinfo, buyeremail, ordertotals | The specific field requested for each order in the range specified
+          OrderListQuery/QueryParams/IntervalRange/Start| Integer| Required | N/A | Start range number
+          OrderListQuery/QueryParams/IntervalRange/End | Integer | Required | N/A | End range number
+          
+          **Request fields**:
+          
+          Response field | Description
+          ---------- | -----------
+          OrderID | Unique order number (identification value)
+          RequestID | Unique request identification code
+          BuyerEmail | Customer’s email address
+            
+         
+      operationId: getOrderRange
+      consumes:
+        - application/xml
+      produces:
+        - application/xml
+      parameters:
+        - in: body
+          name: payload
+          description: Get Order payload
+          required: true
+          schema:
+            $ref: '#/definitions/ystorewsGetOrderRangeRequest'
+      responses:
+        '200':
+          description: Successful Order Results
+          schema:
+            $ref: '#/definitions/ystorewsGetOrderRangeResponse'
+        '500':
+          description: Unsuccessful Operation
+          schema:
+            $ref: '#/definitions/ErrorResourceList'
+  
+  
+  /V1/Get Custom Status:
+    post:
+      tags:
+        - Orders
+      summary: Get Custom Status
+      description: >-
+        ## GetCustomStatus
+          The GetCustomStatus operation is used to retrieve information about a previously-created custom order status.
+          
+          **REST based URL**: https://<storeid>.order.store.yahooapis.com/V1/customorderstatus
+          
+          **Method**: POST
+          
+          **Request fields**:
+          
+          Request Field | Type | Cardinality | Valid Values | Description
+          ------------- | ---- | ----------- | ------------ | ------------
+          CustomOrderStatus/StatusID | Integer | Required | Consult XSD | Self explanatory
+          
+          **Request fields**:
+          
+          Response field   |    Description
+          ---------- | ---------------
+          RequestID | Request identification code
+          StatusID | Status identification number
+          Code | Status code
+          MsgToBuyer | Message displayed to buyer when an order is marked with a custom status
+          IncludeInStats | When its value is 1, an order that is marked with this status is included in stats; if value is not 1, it cannot be marked with this status
+          InUse | When its value is 1, an order can be marked with this status; if value is not 1, it cannot be marked with this status
+        
+        
+        
+        
+      operationId: getCustomStatus
+      consumes:
+        - application/xml
+      produces:
+        - application/xml
+      parameters:
+        - in: body
+          name: payload
+          description: Get Order payload
+          required: true
+          schema:
+            $ref: '#/definitions/ystorewsCustomStatusRequest'
+      responses:
+        '200':
+          description: Successful Order Results
+          schema:
+            $ref: '#/definitions/ystorewsCustomStatusResponse'
+        '500':
+          description: Unsuccessful Operation
+          schema:
+            $ref: '#/definitions/ErrorResourceList'
+  
+  /V1/Create New Custom Status:
+    post:
+      tags:
+        - Orders
+      summary: Create New Custom Status
+      description: >-
+        ## Create New Custom Status
+          The Create New Custom Status operation allows a partner to create a new custom order status that may
+          be assigned to an order.
+          
+          **REST based URL**: https://<storeid>.order.store.yahooapis.com/V1/customorderstatus
+          **Method**: POST
+          
+          **Request fields**:
+          Input:
+          
+          Request Field | Type | Cardinality | Valid Values | Description
+          ------------- | ---- | ----------- | ------------ | ------------
+          CustomOrderStatus/Code | String | Required | Consult XSD | Self explanatory
+          CustomOrderStatus/MsgToBuyer | String | Required | Consult XSD | Message displayed to buyer when an order is marked with a custom status
+          CustomOrderStatus/IncludeInStats | Integer| Required | true/false | When its value istrue, an order that is marked with this status is included in stats; if value is false, it is not included in stats
+          CustomOrderStatus/InUse | Integer | Required | true/false | When its value is true, an order can be marked with this status; if value is false, it cannot be marked with this status
+          
+          **Request fields**:
+          
+          Response field | Description
+          ---------- | -----------
+          StatusID | Status identification number
+          Error/Code | If an error response, the numerical code assigned to the Error
+          Error Message | If an error response, the corresponding message explaining the error that has occurred.
+      operationId: createNewCustomStatus
+      consumes:
+        - application/xml
+      produces:
+        - application/xml
+      parameters:
+        - in: body
+          name: payload
+          description: Get Order payload
+          required: true
+          schema:
+            $ref: '#/definitions/ystorewsCreateNewCustomStatusRequest'
+      responses:
+        '200':
+          description: Successful Order Results
+          schema:
+            $ref: '#/definitions/ystorewsCreateNewCustomStatusResponse'
+        '500':
+          description: Unsuccessful Operation
+          schema:
+            $ref: '#/definitions/ErrorResourceList'
+  
+  
+  /V1/Update New Custom Status:
+    post:
+      tags:
+        - Orders
+      summary: Update New Custom Status
+      description: >-
+        ## Update Custom Status
+
+          The Update Custom Status operation enables a previously-created custom order status to be updated.
+          
+          **REST based URL**: https://<storeid>.order.store.yahooapis.com/V1/customorderstatus
+          
+          **Method**: POST
+          
+          **Request fields**:
+          
+          
+          Request Field | Type | Cardinality | Valid Values | Description
+          ------------- | ---- | ----------- | ------------ | ------------
+          CustomOrderStatus/StatusID | Integer | Required | Consult XSD | Self explanatory
+          CustomOrderStatus/Code | String | Optional | Consult XSD | Status code
+          CustomOrderStatus/MsgToBuyer | String | Optionnal | N/A | Message displayed to buyer when an order is marked with a custom status
+          CustomOrderStatus/IncludedinStats | Boolean | Optionnal | true/false | When its value is 1, an order that is marked with this status is included in stats; if value is 0, it is not included in stats
+          CustomOrderStatus/InUse | String | Boolean | Optionnal | true/false | When its value is 1, an order can be marked with this status; if value is not 1, it cannot be marked with this status
+          
+          **Request fields**:
+          
+          Response field | Description
+          ---------- | -----------
+          RequestID | Unique request identification code
+          ProcessingStatus | Order processing status
+        
+        
+        
+        
+      operationId: updateNewCustomStatus
+      consumes:
+        - application/xml
+      produces:
+        - application/xml
+      parameters:
+        - in: body
+          name: payload
+          description: Get Order payload
+          required: true
+          schema:
+            $ref: '#/definitions/ystorewsRequest'
+      responses:
+        '200':
+          description: Successful Order Results
+          schema:
+            $ref: '#/definitions/ystorewsResponse'
+        '500':
+          description: Unsuccessful Operation
+          schema:
+            $ref: '#/definitions/ErrorResourceList'
+    
+  /V1/Get Order/TransactionList:
+    post:
+      tags:
+        - Orders
+      summary: Get Order/TransactionList
+      description: >-
+        This operation is used to retrieve information about a particular order.
+        The information sought must be specified in the ‘Include’ tag under
+        ‘Filter’. Currently, only certain fields are supported.
+      operationId: updateNewCustomStatus1
+      consumes:
+        - application/xml
+      produces:
+        - application/xml
+      parameters:
+        - in: body
+          name: payload
+          description: Get Order payload
+          required: true
+          schema:
+            $ref: '#/definitions/ystorewsRequest'
+      responses:
+        '200':
+          description: Successful Order Results
+          schema:
+            $ref: '#/definitions/ystorewsResponse'
+        '500':
+          description: Unsuccessful Operation
+          schema:
+            $ref: '#/definitions/ErrorResourceList'
+   
+   
+  
+            
+definitions:
+  ErrorResourceList:
+    type: object
+    properties:
+       RequestId:
+         type: string
+         example: 1
+       ErrorRequestList:
+        type: object
+        properties:
+          Error:
+           type: object
+           properties:
+             Code:
+              type: string
+             Message: 
+              type: string
+  
+  
+  CustomStatusResourceList:
+    type: object
+    properties: 
+      ResourceList:
+        type: object
+        properties:
+          CustomOrderStatusListQuery:
+            type: object
+            properties:
+              CustomQueryParams:
+                type: object
+                properties:
+                   StatusID:
+                    type: string
+                    
+                    
+  CustomStatusResponseResourceList:
+    type: object
+    properties:
+      Order:
+        type: object
+        properties:
+          OrderID:
+            type: string
+            example: 485
+          
+          Buyer Email:
+            type: string
+            example: test_shopper@test.com 
+      
+      Order1:
+        type: object
+        properties:
+          OrderID:
+            type: string
+            example: 486
+          
+          Buyer Email:
+            type: string
+            example: test_shopper@test.com
+  
+  
+  CreateNewCustomStatusResourceList:
+    type: object
+    properties: 
+          CustomOrderStatus:
+            type: object
+            properties:
+              Code:
+                type: string
+              MsgToBuyer:
+                type: string
+              IncludeInStats:
+                type: string
+              InUse:
+                type: string
+              
+              
+                    
+                    
+  CreateNewCustomStatusResponseResourceList:
+    type: object
+    properties:
+      Order:
+        type: object
+        properties:
+          OrderID:
+            type: string
+            example: 485
+          
+          Buyer Email:
+            type: string
+            example: test_shopper@test.com 
+      
+      Order1:
+        type: object
+        properties:
+          OrderID:
+            type: string
+            example: 486
+          
+          Buyer Email:
+            type: string
+            example: test_shopper@test.com
+  
+  GetOrderRangeRequestResourceList:
+    type: object
+    properties:
+      OrderListQuery:
+        type: object
+        properties:
+          Filter:
+            type: object
+            properties:
+              Include:
+               type: string
+          QueryParms:
+            type: object
+            properties: 
+              IntervalRange:
+                type: object
+                properties:
+                  Start:
+                   type: string
+                  End:
+                   type: string
+                  
+              
+                    
+        
+                    
+              
+                    
+                    
+  GetOrderRangeResponseResourceList:
+    type: object
+    properties:
+      OrderListQuery:
+        type: object
+        properties:
+          OrderID:
+            type: string
+            example: 485
+          
+          Buyer Email:
+            type: string
+            example: test_shopper@test.com 
+      
+      Order1:
+        type: object
+        properties:
+          OrderID:
+            type: string
+            example: 486
+          
+          Buyer Email:
+            type: string
+            example: test_shopper@test.com
+  
+  StoreID:
+    type: string
+    example: yhst-1234567890
+    
+  SecurityHeader:
+    type: object
+    properties:
+      PartnerStoreContractToken:
+        type: string
+  Version:
+    type: string
+    example: 1.0
+  Verb:
+    type: string
+    example: get
+  ResourceList:
+    type: object
+    properties:
+      OrderListQuery:
+        type: object
+        properties:
+          Filter:
+            type: object
+            properties:
+              Include:
+                type: string
+                required:
+                  - status
+                  - shipmentinfo
+                  - shiptoinfo
+                  - billtoinfo
+          QueryParams:
+            type: object
+            properties:
+              OrderId:
+                type: integer
+                
+                
+                
+  ResponseResourceList:
+    type: object
+    properties:
+      OrderListQuery:
+        type: object
+        properties:
+          Order:
+            type: object
+            properties:
+              OrderID:
+                type: string
+                example: 485
+                properties:
+                  Include:
+                    type: string
+                    required:
+                      - orderid
+              
+              StatusList:
+                type: string
+                properties:
+                  OrderStatus:
+                    type: number
+                    properties:
+                       StatusID:
+                         type: number
+              
+                
+        
+              
+              CartShipmentInfo:
+                type: object
+                properties:
+                   TrackingNumber:
+                    type: string
+                    example: JSEF67J22
+                   Shipper:
+                    type: string 
+                    example: DHL
+                   ShipState:
+                    type: string
+                    example: FL
+                   EmailCustomer:
+                    type: integer
+                    example: john.doe@yahooya.org
+                    
+              ShipToInfo:
+                type: object
+                properties:
+                   Firstname:
+                    type: string
+                    example: John
+                   Lastname:
+                    type: string
+                    example: Doe
+                   PhoneNumber:
+                    type: string 
+                    example: 212-555-1212
+                   Company:
+                    type: string 
+                    example: Yahooya
+                   Email:
+                    type: integer
+                    example: john.doe@yahooya.org
+                   Address1:
+                    type: string
+                    example: 123 Anywhere Street
+                   Address2:
+                    type: string 
+                    example: Suite 2
+                   City:
+                    type: string
+                    example: Santa Clara
+                   State:
+                    type: string
+                    example: CA
+                   Zip:
+                    type: string
+                    example: 12346
+                     
+                    
+              BuildToInfo:
+                type: object
+                properties:
+                   Firstname:
+                    type: string
+                    example: John
+                   Lastname:
+                    type: string
+                    example: Doe
+                   PhoneNumber:
+                    type: string 
+                    example: 212-555-1212
+                   Company:
+                    type: string 
+                    example: Yahooya
+                   Email:
+                    type: integer
+                    example: john.doe@yahooya.org
+                   Address1:
+                    type: string
+                    example: 123 Anywhere Street
+                   Address2:
+                    type: string 
+                    example: Suite 2
+                   City:
+                    type: string
+                    example: Santa Clara
+                   State:
+                    type: string
+                    example: CA
+                   Zip:
+                    type: string
+                    example: 12346
+              
+              BuyerEmail:
+                type: string
+        
+              CustomFieldsList:
+                type: object
+                properties:
+                  CustomField:
+                    type: object
+                    properties: 
+                      key:
+                       type: string
+                      Value: 
+                       type: string
+                     
+                      ItemList:
+                       type: object
+                       properties:
+                         Item:
+                          type: object
+                          properties: 
+                             LineNumber:
+                              type: integer
+                              example: 0
+                             ItemID:
+                              type: string
+                              example: item 1
+                             ItemCode:
+                              type: string
+                              example: item1
+                             Quantity:
+                              type: integer
+                              example: 1
+                             Unit Price:
+                              type: string
+                              example: 11
+                             Description: 
+                              type: string 
+                              example: item1
+                             URL:
+                              type: string
+                              example: http://v3test-46.stores.yahoo.net/item1.html
+                             Taxable:
+                              type: string
+                              example: true
+                             ThumbnailURL:
+                              type: string
+                              example: http://v3test-46.stores.yahoo.net/item1.html
+                        
+                      OrderTotals:
+                        type: object
+                        properties:
+                          Subtotals:
+                           type: number
+                          Shipping:
+                           type: number
+                          Tax:
+                           type: number
+                          Promotions:
+                           type: object
+                           properties:
+                            AppliedPromotion:
+                              type: object
+                              properties:
+                                Id: 
+                                 type: string
+                                 example: 2
+                                Name: 
+                                 type: string
+                                 example: MyPromotion
+                                Type: 
+                                 type: string
+                                 example: PERCENTAGE
+                                Discount: 
+                                 type: string
+                                 example: 0.00
+                                Message: 
+                                 type: string
+                                 example: 10.00% Off
+                                 
+                                 
+                      Referer:
+                       type: string
+                       example: http://www.yahoo.com
+                      EntryPoint:
+                       type: string
+                       example: http://www.yahoo.com
+                      BuyerComments:
+                       type: string
+                       example: Test Comments
+                      MerchantNotes:
+                       type: string
+                      PaymentProcessor:
+                       type: string
+                       example: PayPal
+                      Currency:
+                       type: string
+                       example: USD
+                      GiftMessage:
+                       type: string
+                       example: Test Gift Message
+                      PaymentType:
+                       type: string
+                       example: PayPal
+                      LastUpdated:
+                       type: string
+                       example: Tue Sep 10 09:33:14 2013 GM
+                      BuyerIP:
+                       type: string
+                       example: 203.83.248.37
+                      
+                      
+              
+              
+                
+                  
+  
+  
+  
+  
+  ystorewsRequest:
+    type: object
+    properties:
+      StoreID:
+        $ref: '#/definitions/StoreID'
+      SecurityHeader:
+        $ref: '#/definitions/SecurityHeader'
+      Version:
+        $ref: '#/definitions/Version'
+      Verb:
+        $ref: '#/definitions/Verb'
+      ResourceList:
+        $ref: '#/definitions/ResourceList'
+      
+        
+  
+  
+  ystorewsResponse:
+    type: object
+    properties:
+      StoreID:
+        $ref: '#/definitions/StoreID'
+      Version:
+        $ref: '#/definitions/Version'
+      ResponseResourceList:
+        $ref: '#/definitions/ResponseResourceList'
+
+
+
+
+
+  ystorewsCustomStatusRequest:
+    type: object
+    properties:
+      StoreID:
+        $ref: '#/definitions/StoreID'
+      SecurityHeader:
+        $ref: '#/definitions/SecurityHeader'
+      Version:
+        $ref: '#/definitions/Version'
+      Verb:
+        $ref: '#/definitions/Verb'
+      ResourceList:
+        $ref: '#/definitions/CustomStatusResourceList'
+      
+  
+  
+  ystorewsCustomStatusResponse:
+    type: object
+    properties:
+      StoreID:
+        $ref: '#/definitions/StoreID'
+      Version:
+        $ref: '#/definitions/Version'
+      ResponseResourceList:
+        $ref: '#/definitions/CustomStatusResponseResourceList'
+        
+        
+        
+        
+        
+  ystorewsCreateNewCustomStatusRequest:
+    type: object
+    properties:
+      StoreID:
+        $ref: '#/definitions/StoreID'
+      SecurityHeader:
+        $ref: '#/definitions/SecurityHeader'
+      Version:
+        $ref: '#/definitions/Version'
+      Verb:
+        $ref: '#/definitions/Verb'
+      ResourceList:
+        $ref: '#/definitions/CreateNewCustomStatusResourceList'
+      
+  
+  
+  ystorewsCreateNewCustomStatusResponse:
+    type: object
+    properties:
+      StoreID:
+        $ref: '#/definitions/StoreID'
+      Version:
+        $ref: '#/definitions/Version'
+      ResponseResourceList:
+        $ref: '#/definitions/CreateNewCustomStatusResponseResourceList'      
+        
+        
+  ystorewsGetOrderRangeRequest:
+    type: object
+    properties:
+      StoreID:
+        $ref: '#/definitions/StoreID'
+      SecurityHeader:
+        $ref: '#/definitions/SecurityHeader'
+      Version:
+        $ref: '#/definitions/Version'
+      Verb:
+        $ref: '#/definitions/Verb'
+      ResourceList:
+        $ref: '#/definitions/GetOrderRangeRequestResourceList'
+      
+  
+  
+  ystorewsGetOrderRangeResponse:
+    type: object
+    properties:
+      StoreID:
+        $ref: '#/definitions/StoreID'
+      Version:
+        $ref: '#/definitions/Version'
+      ResponseResourceList:
+        $ref: '#/definitions/GetOrderRangeResponseResourceList'
+# Added by API Auto Mocking Plugin
+schemes:
+ - https
+ - http
